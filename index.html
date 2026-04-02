@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Randomization Devices</title>
+<link rel="icon" type="image/x-icon" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F2EA; --ink: #1E1A14; --ink-muted: #6B6152;
+  --rust: #8C3B1A; --rust-light: #C4633A;
+  --border: #C8BCA8; --surface: #FAF7F2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* HOME */
+#home-inner { max-width: 1000px; margin: 0 auto; width: 100%; padding: 64px 40px 48px; }
+.eyebrow { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--rust); margin-bottom:20px; }
+.home-title { font-family:'Lora',serif; font-size:42px; font-weight:400; line-height:1.18; margin-bottom:18px; text-align: center;}
+.home-desc { font-size:19px; font-weight:300; color:var(--ink-muted); line-height:1.6; }
+.device-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+.device-card { border:1.5px solid var(--border); background:var(--surface); padding:28px; cursor:pointer; transition:border-color .18s,transform .15s,box-shadow .18s; position:relative; }
+.device-card:hover { border-color:var(--rust); transform:translateY(-2px); box-shadow:0 6px 24px rgba(30,26,20,.08); }
+.device-card:hover .card-arrow { opacity:1; transform:translateX(0); }
+.card-tag { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--rust-light); margin-bottom:10px; }
+.card-name { font-family:'Lora',serif; font-size:22px; font-weight:600; margin-bottom:8px; }
+.card-desc { font-size:15px; color:var(--ink-muted); line-height:1.55; font-weight:300; }
+.card-arrow { position:absolute; bottom:22px; right:24px; font-size:18px; color:var(--rust); opacity:0; transform:translateX(-6px); transition:opacity .18s,transform .18s; }
+
+/* SHARED DEMO CHROME */
+.demo-header { display:flex; align-items:center; gap:16px; padding:20px 32px; border-bottom:1px solid var(--border); background:var(--surface); }
+.back-btn { font-family:'DM Mono',monospace; font-size:25px; letter-spacing:.1em; text-transform:uppercase; color:var(--rust); background:none; border:none; cursor:pointer; padding:6px 0; opacity:.8; transition:opacity .15s; }
+.back-btn:hover { opacity:1; }
+.hdr-sep { color:var(--border); font-size:18px; }
+.hdr-title { font-family:'Lora',serif; font-size:18px; font-weight:400; color:var(--ink-muted); }
+.demo-body { flex:1; display:flex; flex-direction:column; align-items:center; padding:40px 32px; max-width:1000px; margin:0 auto; width:100%; }
+.demo-intro { text-align:center; margin-bottom:28px; }
+.demo-intro h2 { font-family:'Lora',serif; font-size:26px; font-weight:400; margin-bottom:10px; }
+.demo-intro p { font-size:17px; font-weight:300; color:var(--ink-muted); line-height:1.6; max-width:750px; margin:0 auto; }
+.action-btn { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; background:var(--rust); color:var(--surface); border:none; padding:13px 28px; cursor:pointer; transition:background .15s,transform .1s; margin-top:22px; }
+.action-btn:hover { background:var(--rust-light); }
+.action-btn:active { transform:scale(.97); }
+.action-btn:disabled { opacity:.4; cursor:default; }
+.result-box { margin-top:18px; border:1.5px solid var(--border); padding:16px 22px; background:var(--surface); min-height:52px; width:100%; max-width:520px; text-align:center; font-size:16px; color:var(--ink-muted); line-height:1.6; transition:border-color .2s,color .2s; }
+.result-box.filled { border-color:var(--rust); color:var(--ink); }
+.reset-link { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--rust-light); background:none; border:none; cursor:pointer; margin-top:10px; opacity:.7; transition:opacity .15s; }
+.reset-link:hover { opacity:1; }
+
+/* scapulimancy */
+.scapula-wrap { position:relative; width:280px; height:280px; }
+.ck { stroke:#3D2B1A; stroke-width:1.5; stroke-linecap:round; fill:none; opacity:0; stroke-dasharray:300; stroke-dashoffset:300; }
+.ck.show { opacity:1; animation:drawCrack .6s ease-out forwards; }
+@keyframes drawCrack { to { stroke-dashoffset:0; } }
+.heat-pulse { animation:heatBone 2s ease-in-out 2; }
+@keyframes heatBone { 0%,100% { fill:#D9CEBC; } 50% { fill:#C09060; } }
+
+/* LAVARAND */
+.lamps-row { display:flex; gap:18px; align-items:flex-end; justify-content:center; margin-bottom:4px; }
+.lamp-wrap { display:flex; flex-direction:column; align-items:center; }
+.lamp-top { width:42px; height:12px; background:linear-gradient(to bottom,#888,#555); border-radius:21px 21px 0 0; }
+.lamp-glass { width:88px; height:214px; border-radius:44px 44px 34px 34px; overflow:hidden; position:relative; }
+.lamp-fluid { width:100%; height:100%; position:relative; filter:blur(10px) contrast(18); }
+.blob { position:absolute; border-radius:50%; }
+.lamp-glow { position:absolute; bottom:0; left:0; right:0; height:45%; pointer-events:none; z-index:1; }
+.lamp-sheen { position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(140deg,rgba(255,255,255,.18) 0%,transparent 45%); border:1.5px solid rgba(255,255,255,.22); border-radius:inherit; pointer-events:none; z-index:2; }
+.lamp-flash { position:absolute; top:0; left:0; right:0; bottom:0; background:white; opacity:0; border-radius:inherit; pointer-events:none; z-index:10; }
+.lamp-flash.pop { animation:flashPop .5s ease-out forwards; }
+@keyframes flashPop { 0%{opacity:0} 18%{opacity:.88} 100%{opacity:0} }
+.lamp-base { width:66px; height:26px; background:linear-gradient(to bottom,#555,#333); clip-path:polygon(8% 0%,92% 0%,100% 100%,0% 100%); }
+.lamp-foot { width:78px; height:9px; background:#252525; border-radius:2px; }
+.entropy-box { margin-top:16px; width:100%; max-width:520px; border:1.5px solid var(--border); background:#0B0906; padding:16px 20px; min-height:54px; transition:border-color .2s; }
+.entropy-box.active { border-color:var(--rust); }
+.entropy-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:#555; margin-bottom:8px; }
+.entropy-hex { font-family:'DM Mono',monospace; font-size:11.5px; color:#88C060; letter-spacing:.06em; word-break:break-all; line-height:1.9; }
+/* NGGAM */
+.nggam-wrap { position:relative; width:300px; height:300px; margin-bottom:4px; }
+#nggam-svg { width:100%; height:100%; }
+.nggam-card { transition: opacity .3s; }
+.nggam-card.disturbed rect { stroke: #8C3B1A; }
+.nggam-card.disturbed text { fill: #8C3B1A; }
+@keyframes spiderWalk {
+  0%,100% { transform: rotate(0deg) translateY(-1px); }
+  50%      { transform: rotate(3deg) translateY(1px); }
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div id="home-inner">
+    <div class="eyebrow"></div>
+    <h1 class="home-title">Randomization Devices</h1>
+    <p class="home-desc">This webpage contains schematic, animated demonstrations supporting our work:</p>
+    <br>
+    <p class="home-desc" style="text-align:center">Boger, T., & Amir, D. The cognitive and social origins of randomization devices.</p>
+    <br>
+    <p class="home-desc">Below, we include basic demonstrations of a small selection of the randomization devices discussed in our work. To see a device 'in action', click on its corresponding card.</p>
+    <br>
+    <br><br>
+    <div class="device-grid">
+      <div class="device-card" onclick="showScreen('scapulimancy')">
+        <div class="card-tag">Northern Canada, China, etc.</div>
+        <div class="card-name">Scapulimancy</div>
+        <p class="card-desc">Divination by heating animal shoulder blades and reading the crack patterns that form.</p>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="device-card" onclick="showScreen('nggam')">
+        <div class="card-tag">Cameroon, Nigeria</div>
+        <div class="card-name">Nggam Spider Divination</div>
+        <p class="card-desc">A diviner reads the movements of a burrowed spider.</p>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="device-card" onclick="showScreen('kleroterion')">
+        <div class="card-tag">Ancient Athens</div>
+        <div class="card-name">Kleroterion</div>
+        <p class="card-desc">A stone allotment machine assigns Athenian citizens to jury panels via lottery.</p>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="device-card" onclick="showScreen('lavarand')">
+        <div class="card-tag">Cloudflare offices (SF)</div>
+        <div class="card-name">Lavarand</div>
+        <p class="card-desc">A camera captures the unpredictable fluid motion of a wall of lava lamps.</p>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+    <br><br>
+    <p class="home-desc">These demonstrations correspond to the devices depicted in Figure 1 of our paper, which is available below:</p>
+    <img src="figure1.png" alt="Figure 1 from our paper" style="display: block; margin-left: auto; margin-right: auto; width: 75%">
+    <br><br>
+    <p class="home-desc">Questions? Reach out to Tal Boger (tboger1@jhu.edu) and/or Dorsa Amir (dorsa.amir@duke.edu).</p>
+
+  </div>
+</div>
+
+<!-- NGGAM SPIDER DIVINATION -->
+<div id="nggam" class="screen">
+  <div class="demo-header">
+    <button class="back-btn" onclick="showScreen('home')">← Back</button>
+  </div>
+  <div class="demo-body">
+    <div class="demo-intro">
+      <h2>Nggam Spider Divination</h2>
+      <p>In Mambila culture, a diviner places flat oracle cards around the entrance of a spider's burrow, then covers the hole. The diviner reads the way in which the spider disturbs and overturns the cards, providing an answer to a question.</p>
+    </div>
+    <div class="nggam-wrap">
+      <svg id="nggam-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <button class="action-btn" id="nggam-btn" onclick="runNggam()">Place Cards &amp; Wait</button>
+    <button class="reset-link" onclick="resetNggam()">Reset</button>
+    <div class="result-box" id="nggam-result">The burrow is undisturbed. Place the cards to begin.</div>
+  </div>
+</div>
+
+<!-- KLEROTERION -->
+<div id="kleroterion" class="screen">
+  <div class="demo-header">
+    <button class="back-btn" onclick="showScreen('home')">← Back</button>
+    <!--<span class="hdr-sep">/</span>
+    <span class="hdr-title">Kleroterion</span>-->
+  </div>
+  <div class="demo-body">
+    <div class="demo-intro">
+      <h2>The <i>Kleroterion</i></h2>
+      <p>Bronze name-tablets (<em>pinakia</em>) slot into rows on a stone slab. A hollow tube on the side holds a mixed column of black and white dice — one exits per row. A white die indicates the citizens in the row are chosen; a black die indicates they are not.</p>
+    </div>
+    <svg id="klero-svg" viewBox="0 0 370 410" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg"></svg>
+    <button class="action-btn" id="klero-btn" onclick="runKlero()">Draw Lot</button>
+    <button class="reset-link" onclick="resetKlero()">Reset machine</button>
+    <div class="result-box" id="klero-result">The machine awaits.</div>
+  </div>
+</div>
+
+<!-- scapulimancy -->
+<div id="scapulimancy" class="screen">
+  <div class="demo-header">
+    <button class="back-btn" onclick="showScreen('home')">← Back</button>
+    <!--<span class="hdr-sep">/</span>
+    <span class="hdr-title">Scapulimancy</span>-->
+  </div>
+  <div class="demo-body">
+    <div class="demo-intro">
+      <h2>Scapulimancy</h2>
+      <p>A diviner observes as a shoulder blade is placed on a live fire. Cracks begin to form; the diviner reads their direction, branching, and curvature to make decisions.</p>
+    </div>
+    <div class="scapula-wrap">
+      <svg id="scapula-svg" viewBox="0 0 280 280" style="width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+        <path id="bone-body"
+          d="M 138 28 C 168 26 218 48 236 86 C 250 118 244 156 230 186 C 216 218 192 242 163 252 C 142 260 114 257 95 245 C 72 232 55 206 50 178 C 42 144 50 106 67 78 C 85 50 110 30 138 28 Z"
+          fill="#D9CEBC" stroke="#BFB09A" stroke-width="1.5"/>
+        <path d="M 70 96 Q 138 80 220 98" stroke="#BDAC94" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M 200 64 Q 220 51 236 58 Q 241 68 228 73 Q 213 76 200 64Z" fill="#CAB9A4" stroke="#BFB09A" stroke-width="1"/>
+        <ellipse cx="222" cy="104" rx="9" ry="12" fill="none" stroke="#BDAC94" stroke-width="1.5" opacity=".7"/>
+        <!-- primary structural cracks -->
+        <line  class="ck" id="ck1"  x1="138" y1="86"  x2="126" y2="212"/>
+        <line  class="ck" id="ck2"  x1="138" y1="86"  x2="180" y2="180"/>
+        <path  class="ck" id="ck3"  d="M 128 158 Q 108 172 94 184"/>
+        <path  class="ck" id="ck4"  d="M 138 86  Q 156 72 170 67"/>
+        <path  class="ck" id="ck5"  d="M 180 180 Q 190 200 186 222"/>
+        <line  class="ck" id="ck6"  x1="148" y1="142" x2="184" y2="150"/>
+        <path  class="ck" id="ck7"  d="M 94  184 Q 86 200 88 216"/>
+        <path  class="ck" id="ck8"  d="M 126 212 Q 118 230 115 242"/>
+        <line  class="ck" id="ck9"  x1="102" y1="136" x2="148" y2="142"/>
+        <path  class="ck" id="ck10" d="M 88  108 Q 104 118 116 128"/>
+        <path  class="ck" id="ck11" d="M 160 130 Q 174 122 190 126"/>
+        <path  class="ck" id="ck12" d="M 148 142 Q 156 168 152 192"/>
+        <!-- secondary fine cracks -->
+        <line  class="ck" id="ck13" x1="116" y1="128" x2="104" y2="148" stroke-width="1"/>
+        <path  class="ck" id="ck14" d="M 152 192 Q 144 210 148 224" stroke-width="1"/>
+        <line  class="ck" id="ck15" x1="170" y1="67"  x2="190" y2="72"  stroke-width="1"/>
+        <path  class="ck" id="ck16" d="M 184 150 Q 196 158 198 172" stroke-width="1"/>
+        <line  class="ck" id="ck17" x1="88"  y1="216" x2="80"  y2="232" stroke-width="1"/>
+        <path  class="ck" id="ck18" d="M 115 242 Q 112 252 116 258" stroke-width="1"/>
+        <line  class="ck" id="ck19" x1="126" y1="100" x2="114" y2="112" stroke-width="1"/>
+        <path  class="ck" id="ck20" d="M 186 222 Q 180 236 176 244" stroke-width="1"/>
+        <!-- hairline surface crazing -->
+        <line  class="ck" id="ck21" x1="158" y1="106" x2="166" y2="118" stroke-width="0.8"/>
+        <line  class="ck" id="ck22" x1="104" y1="162" x2="96"  y2="170" stroke-width="0.8"/>
+        <path  class="ck" id="ck23" d="M 140 220 Q 134 228 132 238"     stroke-width="0.8"/>
+        <line  class="ck" id="ck24" x1="170" y1="148" x2="178" y2="138" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <button class="action-btn" id="heat-btn" onclick="applyHeat()">Apply Heat</button>
+    <button class="reset-link" onclick="resetBone()">Reset bone</button>
+    <div class="result-box" id="scap-result">The bone is cold. Apply heat to begin divination.</div>
+  </div>
+</div>
+
+<!-- LAVARAND -->
+<div id="lavarand" class="screen">
+  <div class="demo-header">
+    <button class="back-btn" onclick="showScreen('home')">← Back</button>
+    <!--<span class="hdr-sep">/</span>
+    <span class="hdr-title">LavaRand</span>-->
+  </div>
+  <div class="demo-body">
+    <div class="demo-intro">
+      <h2>Lavarand</h2>
+      <p>Cloudflare's San Francisco office films a wall of lava lamps. The lava lamps' motion is truly random, and a video feed of the lamps seeds the cryptographic random number generators.</p>
+    </div>
+    <div class="lamps-row">
+      <div class="lamp-wrap">
+        <div class="lamp-top"></div>
+        <div class="lamp-glass"><div class="lamp-fluid" id="fluid-0"></div><div class="lamp-glow" id="glow-0"></div><div class="lamp-sheen"></div><div class="lamp-flash" id="flash-0"></div></div>
+        <div class="lamp-base"></div><div class="lamp-foot"></div>
+      </div>
+      <div class="lamp-wrap">
+        <div class="lamp-top"></div>
+        <div class="lamp-glass"><div class="lamp-fluid" id="fluid-1"></div><div class="lamp-glow" id="glow-1"></div><div class="lamp-sheen"></div><div class="lamp-flash" id="flash-1"></div></div>
+        <div class="lamp-base"></div><div class="lamp-foot"></div>
+      </div>
+      <div class="lamp-wrap">
+        <div class="lamp-top"></div>
+        <div class="lamp-glass"><div class="lamp-fluid" id="fluid-2"></div><div class="lamp-glow" id="glow-2"></div><div class="lamp-sheen"></div><div class="lamp-flash" id="flash-2"></div></div>
+        <div class="lamp-base"></div><div class="lamp-foot"></div>
+      </div>
+      <div class="lamp-wrap">
+        <div class="lamp-top"></div>
+        <div class="lamp-glass"><div class="lamp-fluid" id="fluid-3"></div><div class="lamp-glow" id="glow-3"></div><div class="lamp-sheen"></div><div class="lamp-flash" id="flash-3"></div></div>
+        <div class="lamp-base"></div><div class="lamp-foot"></div>
+      </div>
+    </div>
+    <button class="action-btn" onclick="captureEntropy()">Capture Frame</button>
+    <div class="entropy-box" id="entropy-box">
+      <div class="entropy-label">256-bit entropy output</div>
+      <div class="entropy-hex" id="entropy-hex">— awaiting capture —</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────
+let animFrame = null, lampRunning = false;
+
+function showScreen(id) {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; lampRunning = false; }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'kleroterion') buildKlero();
+  if (id === 'scapulimancy') resetBone();
+  if (id === 'lavarand') initLamps();
+  if (id === 'nggam') initNggam();
+}
+
+// ── KLEROTERION ─────────────────────────────────────────
+const NS = 'http://www.w3.org/2000/svg';
+const ROWS = [
+  ['Aristoph.','Demetrios','Nikias','Kleon'],
+  ['Thrasyb.','Euphronios','Philon','Sokrates'],
+  ['Xenophon','Alkibiad.','Eukleides','Mneson'],
+  ['Perikles','Andokides','Lykourgos','Timon'],
+  ['Kallikr.','Hippokr.','Theagenes','Diokles'],
+  ['Agathon','Kratinos','Mnesiph.','Polyeuk.'],
+];
+const ROW_CY = [42, 96, 150, 204, 258, 312]; // unused, kept for compat
+let kleroRowCenters = [];
+let kleroRunning = false;
+
+function se(tag, attrs, text) {
+  const el = document.createElementNS(NS, tag);
+  if (attrs) for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+function buildKlero() {
+  const svg = document.getElementById('klero-svg');
+  svg.innerHTML = '';
+  kleroRunning = false;
+  kleroRowCenters = [];
+  document.getElementById('klero-btn').disabled = false;
+  const res = document.getElementById('klero-result');
+  res.textContent = 'The machine awaits.';
+  res.classList.remove('filled');
+
+  const defs = se('defs');
+  const mg = se('linearGradient',{id:'mg',x1:'0',y1:'0',x2:'1',y2:'0'});
+  mg.append(
+    se('stop',{offset:'0%','stop-color':'#C4BBA8'}),
+    se('stop',{offset:'28%','stop-color':'#EAE2CE'}),
+    se('stop',{offset:'72%','stop-color':'#E0D8C4'}),
+    se('stop',{offset:'100%','stop-color':'#BCADA0'})
+  );
+  const cg = se('linearGradient',{id:'cg',x1:'0',y1:'0',x2:'1',y2:'0'});
+  cg.append(
+    se('stop',{offset:'0%','stop-color':'#A09080'}),
+    se('stop',{offset:'40%','stop-color':'#D4CCB8'}),
+    se('stop',{offset:'100%','stop-color':'#9C9080'})
+  );
+  const pg = se('linearGradient',{id:'pg',x1:'0',y1:'0',x2:'0',y2:'1'});
+  pg.append(
+    se('stop',{offset:'0%','stop-color':'#CAC0A8'}),
+    se('stop',{offset:'100%','stop-color':'#B8AE98'})
+  );
+  const tg = se('linearGradient',{id:'tg',x1:'0',y1:'0',x2:'1',y2:'0'});
+  tg.append(
+    se('stop',{offset:'0%','stop-color':'#5C4606'}),
+    se('stop',{offset:'45%','stop-color':'#BF9218'}),
+    se('stop',{offset:'100%','stop-color':'#5C4606'})
+  );
+  defs.append(mg, cg, pg, tg);
+  svg.appendChild(defs);
+
+  // ── Layout ──
+  const SX=30, SY=56, SW=268, SH=322, CW=22;
+  const N=6, nC=4, SLOT_H=SH/N; // ~53.7px per row
+  const SLOT_W=46, SLOT_GAP=5;
+  const TX=SX+SW-26, TW=26;           // tube inside right edge of slab
+  const SLOT_X0 = SX+8;               // first slot column
+
+  // Stylobate
+  svg.appendChild(se('rect',{x:`${SX-CW-10}`,y:`${SY+SH+2}`,width:`${SW+CW*2+20}`,height:'14',fill:'url(#mg)',stroke:'#9A9080','stroke-width':'1'}));
+  svg.appendChild(se('rect',{x:`${SX-CW-18}`,y:`${SY+SH+16}`,width:`${SW+CW*2+36}`,height:'11',fill:'url(#mg)',stroke:'#9A9080','stroke-width':'1'}));
+
+  // Slab
+  svg.appendChild(se('rect',{x:`${SX}`,y:`${SY}`,width:`${SW}`,height:`${SH}`,fill:'url(#mg)',stroke:'#9A9080','stroke-width':'1.5'}));
+  for (let x=SX+22; x<TX-4; x+=24)
+    svg.appendChild(se('line',{x1:`${x}`,y1:`${SY+4}`,x2:`${x}`,y2:`${SY+SH-4}`,stroke:'#B0A890','stroke-width':'.3',opacity:'.28'}));
+
+  // Left column
+  svg.appendChild(se('rect',{x:`${SX-CW}`,y:`${SY}`,width:`${CW}`,height:`${SH}`,fill:'url(#cg)',stroke:'#9A9080','stroke-width':'1'}));
+  [4,9,14].forEach(fx =>
+    svg.appendChild(se('line',{x1:`${SX-CW+fx}`,y1:`${SY+6}`,x2:`${SX-CW+fx}`,y2:`${SY+SH-6}`,stroke:'#968C7A','stroke-width':'.55',opacity:'.38'})));
+
+  // Right column
+  svg.appendChild(se('rect',{x:`${SX+SW}`,y:`${SY}`,width:`${CW}`,height:`${SH}`,fill:'url(#cg)',stroke:'#9A9080','stroke-width':'1'}));
+  [4,9,14].forEach(fx =>
+    svg.appendChild(se('line',{x1:`${SX+SW+fx}`,y1:`${SY+6}`,x2:`${SX+SW+fx}`,y2:`${SY+SH-6}`,stroke:'#968C7A','stroke-width':'.55',opacity:'.38'})));
+
+  // Entablature
+  const EY=8;
+  svg.appendChild(se('rect',{x:`${SX-CW-2}`,y:`${EY}`,      width:`${SW+CW*2+4}`,height:'22',fill:'url(#mg)',stroke:'#888070','stroke-width':'1.6'})); // architrave
+  svg.appendChild(se('rect',{x:`${SX-CW-2}`,y:`${EY+22}`,   width:`${SW+CW*2+4}`,height:'20',fill:'url(#mg)',stroke:'#888070','stroke-width':'1.1'})); // frieze
+  svg.appendChild(se('rect',{x:`${SX-CW-2}`,y:`${EY+42}`,   width:`${SW+CW*2+4}`,height:'10',fill:'#BAB09E',stroke:'#888070','stroke-width':'1'}));   // cornice
+
+  // Greek letters in frieze (aligned to slot columns)
+  ['Α','Β','Γ','Δ'].forEach((ch,j) => {
+    const cx = SLOT_X0 + j*(SLOT_W+SLOT_GAP) + SLOT_W/2;
+    svg.appendChild(se('text',{x:`${cx}`,y:`${EY+36}`,'text-anchor':'middle','font-family':'serif','font-size':'12.5','fill':'#4A4030'},ch));
+  });
+
+  // Row dividers + row highlights + slots
+  for (let i=0; i<N; i++) {
+    const rowY = SY + i*SLOT_H;
+    const cy   = rowY + SLOT_H/2;
+    kleroRowCenters.push(cy);
+
+    if (i>0) svg.appendChild(se('line',{x1:`${SX+4}`,y1:`${rowY}`,x2:`${TX-3}`,y2:`${rowY}`,stroke:'#A09080','stroke-width':'.55',opacity:'.55'}));
+
+    svg.appendChild(se('rect',{id:`rh-${i}`,x:`${SX+2}`,y:`${rowY+1}`,width:`${TX-SX-6}`,height:`${SLOT_H-2}`,fill:'#7AAA38',opacity:'0',rx:'1'}));
+
+    for (let j=0; j<nC; j++) {
+      const sx = SLOT_X0 + j*(SLOT_W+SLOT_GAP);
+      const g = se('g',{id:`slot-${i}-${j}`});
+      g.appendChild(se('rect',{x:`${sx+1}`,y:`${cy-9}`,  width:`${SLOT_W}`,height:'18',rx:'1',fill:'#8A7860',opacity:'.3'}));
+      g.appendChild(se('rect',{x:`${sx}`,  y:`${cy-10}`, width:`${SLOT_W}`,height:'18',rx:'1',fill:'url(#pg)',stroke:'#9A8E7A','stroke-width':'.8'}));
+      g.appendChild(se('text',{x:`${sx+SLOT_W/2}`,y:`${cy+4}`,'text-anchor':'middle','font-family':'DM Mono,monospace','font-size':'7','fill':'#6A6050'},ROWS[i][j]));
+      svg.appendChild(g);
+    }
+  }
+
+  svg.appendChild(se('line',{x1:`${SX+4}`,y1:`${SY+SH}`,x2:`${TX-3}`,y2:`${SY+SH}`,stroke:'#A09080','stroke-width':'.55',opacity:'.55'}));
+
+  const tg2 = se('g',{id:'tube-g'});
+  tg2.appendChild(se('rect',{x:`${TX}`,    y:`${SY+4}`,  width:`${TW}`,  height:`${SH-8}`, rx:'10',fill:'url(#tg)',stroke:'#3E2C04','stroke-width':'1.3'}));
+  tg2.appendChild(se('rect',{x:`${TX+5}`,  y:`${SY+10}`, width:`${TW-10}`,height:`${SH-20}`,rx:'5', fill:'#080604',opacity:'.93'}));
+  tg2.appendChild(se('ellipse',{cx:`${TX+TW/2}`,cy:`${SY+10}`,   rx:`${TW/2-2}`,ry:'4',fill:'#0A0806'}));
+  tg2.appendChild(se('ellipse',{cx:`${TX+TW/2}`,cy:`${SY+SH-10}`,rx:`${TW/2-2}`,ry:'4',fill:'#0A0806'}));
+
+  kleroRowCenters.forEach((cy,i) => {
+    tg2.appendChild(se('circle',{id:`ball-${i}`,   cx:`${TX+TW/2}`,cy:`${cy}`,r:'5.5',fill:'#3E362A',stroke:'#5A5040','stroke-width':'1'}));
+    tg2.appendChild(se('circle',{id:`bshine-${i}`, cx:`${TX+TW/2-2}`,cy:`${cy-2.5}`,r:'2',fill:'rgba(255,255,255,0.12)'}));
+  });
+  svg.appendChild(tg2);
+}
+
+function resetKlero() {
+  buildKlero();
+}
+
+function runKlero() {
+  if (kleroRunning) return;
+  kleroRunning = true;
+  document.getElementById('klero-btn').disabled = true;
+
+  const outcomes = ['white','white','white','black','black','black']
+    .sort(() => Math.random() - 0.5);
+
+  const tubeG = document.getElementById('tube-g');
+
+  // ── Phase 1: shake the tube (like heat-pulse on bone) ──
+  const T_SHAKE = 800;
+  const t0 = performance.now();
+  function shake(now) {
+    const t = Math.min((now - t0) / T_SHAKE, 1);
+    const amp = 4 * Math.sin(Math.PI * t);           // envelope: 0→peak→0
+    const dx  = amp * Math.sin(t * Math.PI * 16);    // rapid oscillation
+    tubeG.setAttribute('transform', `translate(${dx.toFixed(2)},0)`);
+    if (t < 1) { requestAnimationFrame(shake); }
+    else {
+      tubeG.setAttribute('transform', 'translate(0,0)');
+      revealNext(0);
+    }
+  }
+  requestAnimationFrame(shake);
+
+  // ── Phase 2: reveal each ball one-by-one (like cracks appearing) ──
+  function revealNext(i) {
+    if (i >= outcomes.length) {
+      document.getElementById('klero-result').textContent = 'Citizens have been selected!';
+      document.getElementById('klero-result').classList.add('filled');
+      return;
+    }
+    const isW = outcomes[i] === 'white';
+    const ball   = document.getElementById(`ball-${i}`);
+    const bshine = document.getElementById(`bshine-${i}`);
+    const hl     = document.getElementById(`rh-${i}`);
+
+    const BASE_R = 5.5;
+    const T_PULSE = 480;
+    const p0 = performance.now();
+
+    function pulse(now) {
+      const t = Math.min((now - p0) / T_PULSE, 1);
+
+      // Radius: grow to 9 at t=0.45, settle back to BASE_R
+      const peak = Math.sin(Math.PI * Math.min(t / 0.45, 1));
+      ball.setAttribute('r', BASE_R + peak * 3.5);
+
+      // Color: crossfade from neutral to white/black after t=0.3
+      if (t > 0.3) {
+        const blend = Math.min((t - 0.3) / 0.35, 1);
+        // Just snap — SVG can't lerp colors easily, snap at halfway
+        if (blend > 0.5) {
+          ball.setAttribute('fill',   isW ? '#EEE8D4' : '#0C0A08');
+          ball.setAttribute('stroke', isW ? '#C4B890' : '#242018');
+          bshine.setAttribute('fill', isW ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.04)');
+        }
+      }
+
+      // Row highlight fades in from t=0.4
+      if (t > 0.4) {
+        const hlAlpha = Math.min((t - 0.4) / 0.4, 1);
+        hl.setAttribute('fill',    isW ? '#6E9C30' : '#3A2010');
+        hl.setAttribute('opacity', (hlAlpha * (isW ? 0.24 : 0.18)).toFixed(3));
+        // Dim or brighten slot faces
+        if (hlAlpha > 0.5) {
+          for (let j=0; j<4; j++) {
+            const face = document.querySelector(`#slot-${i}-${j} rect:last-of-type`);
+            const txt  = document.querySelector(`#slot-${i}-${j} text`);
+            if (face) { face.setAttribute('fill', isW ? '#C6DC9C' : '#A49A88'); face.setAttribute('stroke', isW ? '#7A9E40' : '#887A6A'); }
+            if (txt)    txt.setAttribute('fill',  isW ? '#2C4412' : '#787060');
+          }
+        }
+      }
+
+      if (t < 1) { requestAnimationFrame(pulse); }
+      else {
+        ball.setAttribute('r', BASE_R);
+        setTimeout(() => revealNext(i + 1), 220);
+      }
+    }
+    requestAnimationFrame(pulse);
+  }
+}
+
+// ── scapulimancy ────────────────────────────────────────
+const READINGS = [
+  { cracks:['ck1','ck4','ck6','ck13','ck19','ck21','ck24'], text:'The Naskapi diviner reads the bone\'s cracks as a map for the next hunt.' },
+  { cracks:['ck1','ck2','ck5','ck12','ck14','ck20','ck22'], text:'A Chinese court diviner reads the bone\'s cracks to see what the future holds for the emperor.' }
+];
+
+let boneHeated = false;
+
+function applyHeat() {
+  if (boneHeated) return;
+  boneHeated = true;
+  document.getElementById('heat-btn').disabled = true;
+  document.getElementById('bone-body').classList.add('heat-pulse');
+  const reading = READINGS[Math.floor(Math.random() * READINGS.length)];
+  reading.cracks.forEach((id, i) => {
+    setTimeout(() => document.getElementById(id)?.classList.add('show'), 1900 + i * 360);
+  });
+  setTimeout(() => {
+    document.getElementById('bone-body').classList.remove('heat-pulse');
+    const rb = document.getElementById('scap-result');
+    rb.textContent = reading.text;
+    rb.classList.add('filled');
+  }, 1900 + reading.cracks.length * 360 + 300);
+}
+
+function resetBone() {
+  boneHeated = false;
+  for (let i = 1; i <= 24; i++) document.getElementById(`ck${i}`)?.classList.remove('show');
+  document.getElementById('bone-body')?.classList.remove('heat-pulse');
+  const btn = document.getElementById('heat-btn');
+  if (btn) btn.disabled = false;
+  const rb = document.getElementById('scap-result');
+  if (rb) { rb.textContent = 'The bone is cold. Apply heat to begin divination.'; rb.classList.remove('filled'); }
+}
+
+// ── LAVARAND ────────────────────────────────────────────
+// blur(10)+contrast(18) pushes each RGB channel to 0 or 1 (threshold ~0.5).
+// Colors below are chosen so their channels land unambiguously on the right side,
+// and the glow matches the actual rendered color.
+const THEMES = [
+  { color:'#FF0000', glow:'rgba(255,0,0,0.7)'   },  // red   → (1,0,0) = red
+  { color:'#FFEE00', glow:'rgba(255,220,0,0.65)' },  // yellow→ (1,1,0) = yellow
+  { color:'#0000FF', glow:'rgba(0,0,255,0.65)'   },  // blue  → (0,0,1) = blue
+  { color:'#FF00FF', glow:'rgba(255,0,255,0.65)' },  // mag.  → (1,0,1) = magenta
+];
+const LW = 88, LH = 214;
+let blobSets = [[],[],[],[]];
+
+function initLamps() {
+  if (lampRunning) return;
+  lampRunning = true;
+  THEMES.forEach((t, li) => {
+    const fluid = document.getElementById(`fluid-${li}`);
+    const glow  = document.getElementById(`glow-${li}`);
+    fluid.innerHTML = '';
+    // Background MUST be pure black for the metaball filter to work
+    fluid.style.background = '#000';
+    glow.style.background = `radial-gradient(ellipse at 50% 100%, ${t.glow} 0%, transparent 65%)`;
+    blobSets[li] = [];
+    // 5 larger blobs — fewer & bigger makes merging visible
+    for (let b = 0; b < 5; b++) {
+      const r = 18 + Math.random() * 16; // r: 18–34px
+      const blob = {
+        x: LW * 0.2 + Math.random() * LW * 0.6,
+        y: LH * 0.25 + Math.random() * LH * 0.5,
+        vx: (Math.random() - .5) * 0.6,
+        vy: (Math.random() - .5) * 0.5,
+        r, phase: Math.random() * Math.PI * 2,
+        color: t.color, el: null,
+      };
+      const el = document.createElement('div');
+      el.className = 'blob';
+      fluid.appendChild(el);
+      blob.el = el;
+      blobSets[li].push(blob);
+    }
+  });
+
+  function tick() {
+    blobSets.forEach(group => {
+      group.forEach(b => {
+        // Buoyancy: blobs heated at bottom rise, cool at top and fall
+        const norm = b.y / LH; // 0=top, 1=bottom
+        b.vy -= (norm - 0.45) * 0.018; // float toward mid-upper zone
+        // Gentle horizontal drift — lava lamps are slow
+        b.vx += (Math.random() - .5) * 0.06;
+        b.vy += (Math.random() - .5) * 0.03;
+        b.vx *= .990; b.vy *= .990;
+        // Cap speed — languid motion
+        const spd = Math.hypot(b.vx, b.vy);
+        if (spd > 0.9) { b.vx = b.vx / spd * 0.9; b.vy = b.vy / spd * 0.9; }
+        b.x += b.vx; b.y += b.vy;
+        // Soft wall bounce
+        if (b.x - b.r < 0)  { b.x = b.r;      b.vx =  Math.abs(b.vx) * .5; }
+        if (b.x + b.r > LW) { b.x = LW - b.r; b.vx = -Math.abs(b.vx) * .5; }
+        if (b.y - b.r < 0)  { b.y = b.r;      b.vy =  Math.abs(b.vy) * .5; }
+        if (b.y + b.r > LH) { b.y = LH - b.r; b.vy = -Math.abs(b.vy) * .5; }
+        // Gentle blob breathing
+        b.phase += 0.016;
+        const dr = b.r * (1 + 0.07 * Math.sin(b.phase));
+        b.el.style.cssText = `background:${b.color};border-radius:50%;position:absolute;width:${dr*2}px;height:${dr*2}px;left:${b.x-dr}px;top:${b.y-dr}px`;
+      });
+    });
+    animFrame = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function captureEntropy() {
+  for (let i = 0; i < 4; i++) {
+    const fl = document.getElementById(`flash-${i}`);
+    fl.classList.remove('pop'); void fl.offsetWidth; fl.classList.add('pop');
+  }
+  const vals = blobSets.flat().flatMap(b => [
+    Math.round(b.x * 10), Math.round(b.y * 10),
+    Math.round(b.vx * 1000), Math.round(b.vy * 1000)
+  ]);
+  let seed = vals.reduce((a, v, i) => a ^ ((v & 0xFFFF) << (i % 15)), Date.now() & 0x7FFFFFFF);
+  function rand32() {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0);
+  }
+  const hex = Array.from({length: 8}, () => rand32().toString(16).padStart(8, '0')).join(' ');
+  setTimeout(() => {
+    document.getElementById('entropy-box').classList.add('active');
+    document.getElementById('entropy-hex').textContent = hex;
+  }, 220);
+}
+// ── NGGAM SPIDER DIVINATION ─────────────────────────────
+const NGGAM_NS = 'http://www.w3.org/2000/svg';
+const CX=150, CY=150, BOWL_R=118, BURROW_R=14;
+
+// Two cards: initial positions just beside the burrow entrance
+const CARD_W = 34, CARD_H = 20;
+// Cards start stacked near the burrow, slightly offset
+const CARD_INIT = [
+  { x: CX - 22, y: CY - 6,  rot: -12 },
+  { x: CX + 14, y: CY - 10, rot:  18 },
+];
+
+// Each reading describes where each card ends up (dx/dy from start, final rot)
+const NGGAM_READINGS = [
+  { card0: {dx:-38, dy:-32, rot:-55}, card1: {dx: 28, dy: 14, rot: 42},
+    text: "The answer is yes." },
+  { card0: {dx:-12, dy:-44, rot:-20}, card1: {dx:-18, dy:-38, rot:-30},
+    text: "The answer is no." }
+];
+
+let nggamRunning=false, nggamAnimId=null;
+
+// Live card state (updated during animation)
+let cardState = [
+  { ...CARD_INIT[0] },
+  { ...CARD_INIT[1] },
+];
+
+function nse(tag,attrs,text){
+  const el=document.createElementNS(NGGAM_NS,tag);
+  if(attrs) for(const[k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+  if(text!==undefined) el.textContent=text;
+  return el;
+}
+
+function initNggam(){
+  nggamRunning=false;
+  if(nggamAnimId){clearTimeout(nggamAnimId);nggamAnimId=null;}
+  cardState = CARD_INIT.map(c=>({...c}));
+  drawNggamBase();
+  document.getElementById('nggam-btn').disabled=false;
+  document.getElementById('nggam-btn').textContent='Move the spider';
+  const rb=document.getElementById('nggam-result');
+  rb.textContent='The cards are placed, and the pot covers the burrowed spider.';
+  rb.classList.remove('filled');
+}
+
+function drawNggamBase(){
+  const svg=document.getElementById('nggam-svg');
+  svg.innerHTML='';
+
+  const defs=nse('defs');
+  const bowlg=nse('radialGradient',{id:'bowlg',cx:'42%',cy:'38%',r:'58%'});
+  bowlg.append(
+    nse('stop',{offset:'0%','stop-color':'#EAE0CC'}),
+    nse('stop',{offset:'55%','stop-color':'#D4C8A8'}),
+    nse('stop',{offset:'100%','stop-color':'#B8A880'})
+  );
+  const rimg=nse('radialGradient',{id:'rimg',cx:'50%',cy:'50%',r:'50%'});
+  rimg.append(
+    nse('stop',{offset:'80%','stop-color':'transparent'}),
+    nse('stop',{offset:'100%','stop-color':'rgba(80,60,20,0.55)'})
+  );
+  defs.append(bowlg,rimg);
+  svg.appendChild(defs);
+
+  // Bowl shadow + fill + rim
+  svg.appendChild(nse('ellipse',{cx:`${CX+4}`,cy:`${CY+7}`,rx:`${BOWL_R+5}`,ry:`${BOWL_R+5}`,fill:'rgba(0,0,0,0.10)'}));
+  svg.appendChild(nse('circle',{cx:`${CX}`,cy:`${CY}`,r:`${BOWL_R}`,fill:'url(#bowlg)',stroke:'#8A7A56','stroke-width':'3'}));
+  svg.appendChild(nse('circle',{cx:`${CX}`,cy:`${CY}`,r:`${BOWL_R}`,fill:'url(#rimg)'}));
+
+  // Soil texture
+  for(let i=0;i<70;i++){
+    const a=Math.random()*Math.PI*2, d=Math.random()*BOWL_R*0.9;
+    svg.appendChild(nse('circle',{
+      cx:(CX+Math.cos(a)*d).toFixed(1), cy:(CY+Math.sin(a)*d).toFixed(1),
+      r:(0.7+Math.random()*1.4).toFixed(1), fill:'#B0A070',
+      opacity:(0.18+Math.random()*0.22).toFixed(2)
+    }));
+  }
+
+  // Burrow
+  svg.appendChild(nse('circle',{cx:`${CX}`,cy:`${CY}`,r:`${BURROW_R+5}`,fill:'#8A7850',opacity:'.4'}));
+  svg.appendChild(nse('circle',{cx:`${CX}`,cy:`${CY}`,r:`${BURROW_R}`,fill:'#1A1208',stroke:'#4A3C20','stroke-width':'1.5'}));
+  svg.appendChild(nse('ellipse',{cx:`${CX-4}`,cy:`${CY-4}`,rx:'5',ry:'3',fill:'rgba(255,255,255,0.06)'}));
+
+  // Cards (both unlabeled, placed at initial positions)
+  drawCards(svg);
+
+  // Spider hidden inside burrow at start
+  drawSpider(svg, CX, CY, 0);
+}
+
+function drawCards(svg){
+  // Remove existing card elements
+  ['nc-0','nc-1'].forEach(id=>{const el=document.getElementById(id); if(el) el.remove();});
+
+  cardState.forEach((c,i)=>{
+    const g=nse('g',{id:`nc-${i}`,transform:`translate(${c.x.toFixed(1)},${c.y.toFixed(1)}) rotate(${c.rot.toFixed(1)})`});
+    // shadow
+    g.appendChild(nse('rect',{x:`${-CARD_W/2+1.5}`,y:`${-CARD_H/2+1.5}`,width:`${CARD_W}`,height:`${CARD_H}`,rx:'2',fill:'rgba(0,0,0,0.18)'}));
+    // face
+    g.appendChild(nse('rect',{x:`${-CARD_W/2}`,y:`${-CARD_H/2}`,width:`${CARD_W}`,height:`${CARD_H}`,rx:'2',fill:'#F0EAD6',stroke:'#9A8E6A','stroke-width':'1.2'}));
+    // grain lines
+    for(let line=-1;line<=1;line++)
+      g.appendChild(nse('line',{x1:`${-CARD_W/2+5}`,y1:`${line*5}`,x2:`${CARD_W/2-5}`,y2:`${line*5}`,stroke:'#D8CEB8','stroke-width':'0.5'}));
+    svg.appendChild(g);
+  });
+}
+
+function drawSpider(svg, x, y, angle){
+  const old=document.getElementById('spider-g'); if(old) old.remove();
+  const g=nse('g',{id:'spider-g'});
+  g.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(angle*180/Math.PI).toFixed(1)})`);
+  // abdomen
+  g.appendChild(nse('ellipse',{cx:'0',cy:'3.5',rx:'4',ry:'5.5',fill:'#1A1208',stroke:'#3C3020','stroke-width':'0.6'}));
+  // cephalothorax
+  g.appendChild(nse('ellipse',{cx:'0',cy:'-2',rx:'3.2',ry:'3.8',fill:'#252010',stroke:'#3C3020','stroke-width':'0.6'}));
+  // eyes
+  g.appendChild(nse('circle',{cx:'-1.2',cy:'-4',r:'0.75',fill:'#8A5828'}));
+  g.appendChild(nse('circle',{cx:'1.2', cy:'-4',r:'0.75',fill:'#8A5828'}));
+  // 4 legs per side
+  [[-0.85,-1.6],[-0.5,-2.4],[0.5,-2.4],[0.85,-1.6]].forEach(([lx,ly])=>{
+    const rx=lx*11, ry=ly*4.5+3;
+    [[1,-1],[-1,-1]].forEach(([sx])=>{
+      g.appendChild(nse('line',{x1:'0',y1:'0',x2:`${sx*rx}`,y2:`${ry}`,stroke:'#1A1208','stroke-width':'1','stroke-linecap':'round'}));
+      g.appendChild(nse('line',{x1:`${sx*rx}`,y1:`${ry}`,x2:`${sx*(rx+lx*4)}`,y2:`${ry+2.5}`,stroke:'#1A1208','stroke-width':'0.7','stroke-linecap':'round'}));
+    });
+  });
+  svg.appendChild(g);
+}
+
+function runNggam(){
+  if(nggamRunning) return;
+  nggamRunning=true;
+  document.getElementById('nggam-btn').disabled=true;
+
+  const svg=document.getElementById('nggam-svg');
+  const reading=NGGAM_READINGS[Math.floor(Math.random()*NGGAM_READINGS.length)];
+
+  // Target card positions
+  const target0={x:CARD_INIT[0].x+reading.card0.dx, y:CARD_INIT[0].y+reading.card0.dy, rot:CARD_INIT[0].rot+reading.card0.rot};
+  const target1={x:CARD_INIT[1].x+reading.card1.dx, y:CARD_INIT[1].y+reading.card1.dy, rot:CARD_INIT[1].rot+reading.card1.rot};
+
+  // Spider path: emerge from burrow, wander toward card0, nudge it,
+  // loop back past center, push card1, return to burrow
+  const midLap = { x: CX + (target0.x-CX)*0.4 + (target1.x-CX)*0.3,
+                   y: CY + (target0.y-CY)*0.4 + (target1.y-CY)*0.3 };
+  const waypoints=[
+    {x:CX, y:CY},                              // start at burrow
+    {x:(CX+target0.x)/2, y:(CY+target0.y)/2},  // approach card0
+    {x:target0.x, y:target0.y},                // reach card0
+    {x:midLap.x, y:midLap.y},                  // loop back
+    {x:(CX+target1.x)/2, y:(CY+target1.y)/2},  // approach card1
+    {x:target1.x, y:target1.y},                // reach card1
+    {x:CX+(target1.x-CX)*0.3, y:CY+(target1.y-CY)*0.3}, // retreat
+    {x:CX, y:CY},                              // return to burrow
+  ];
+
+  // Build smooth interpolated path with frame indices for card nudge triggers
+  const STEPS=[14,18,14,18,14,14,18]; // steps per segment
+  const fullPath=[];
+  const cardTrigger0 = 14+18; // frame when spider reaches card0 (end of seg 1)
+  const cardTrigger1 = 14+18+14+18+14; // frame when spider reaches card1
+
+  for(let w=0;w<waypoints.length-1;w++){
+    const a=waypoints[w], b=waypoints[w+1];
+    const steps=STEPS[w]||18;
+    for(let s=0;s<steps;s++){
+      const t=s/steps;
+      const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      fullPath.push({x:a.x+(b.x-a.x)*ease, y:a.y+(b.y-a.y)*ease});
+    }
+  }
+  fullPath.push(waypoints[waypoints.length-1]);
+
+  // Spider trail polyline
+  const trail=nse('polyline',{fill:'none',stroke:'#6A5830','stroke-width':'0.8',opacity:'0.3','stroke-dasharray':'2,4'});
+  svg.appendChild(trail);
+
+  let frame=0;
+  let card0Nudged=false, card1Nudged=false;
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function stepSpider(){
+    if(frame>=fullPath.length){
+      // Make sure cards are at final positions
+      cardState[0]={...target0}; cardState[1]={...target1};
+      drawCards(svg);
+      // Hide spider back in burrow
+      drawSpider(svg, CX, CY, 0);
+      setTimeout(()=>{
+        const rb=document.getElementById('nggam-result');
+        rb.textContent=reading.text;
+        rb.classList.add('filled');
+      },400);
+      return;
+    }
+
+    const pt=fullPath[frame];
+    const prev=frame>0?fullPath[frame-1]:{x:pt.x,y:pt.y-0.01};
+    const angle=Math.atan2(pt.y-prev.y, pt.x-prev.x)+Math.PI/2;
+
+    // Animate card0: start sliding when spider reaches it
+    if(frame>=cardTrigger0 && !card0Nudged){
+      card0Nudged=true;
+    }
+    if(card0Nudged && frame<cardTrigger1){
+      const t=Math.min((frame-cardTrigger0)/(cardTrigger1-cardTrigger0),1);
+      const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      cardState[0]={
+        x: lerp(CARD_INIT[0].x, target0.x, ease),
+        y: lerp(CARD_INIT[0].y, target0.y, ease),
+        rot: lerp(CARD_INIT[0].rot, target0.rot, ease),
+      };
+      drawCards(svg);
+    }
+
+    // Animate card1: start sliding when spider reaches it
+    if(frame>=cardTrigger1 && !card1Nudged){
+      card1Nudged=true;
+    }
+    if(card1Nudged){
+      const t=Math.min((frame-cardTrigger1)/20,1);
+      const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      cardState[1]={
+        x: lerp(CARD_INIT[1].x, target1.x, ease),
+        y: lerp(CARD_INIT[1].y, target1.y, ease),
+        rot: lerp(CARD_INIT[1].rot, target1.rot, ease),
+      };
+      drawCards(svg);
+    }
+
+    // Update trail
+    trail.setAttribute('points', fullPath.slice(0,frame+1).map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '));
+
+    // Redraw spider on top
+    drawSpider(svg, pt.x, pt.y, angle);
+
+    frame++;
+    nggamAnimId=setTimeout(stepSpider, 30);
+  }
+
+  // Brief pause then emerge
+  setTimeout(stepSpider, 400);
+}
+
+function resetNggam(){
+  if(nggamAnimId){clearTimeout(nggamAnimId);nggamAnimId=null;}
+  nggamRunning=false;
+  initNggam();
+}
+
+</script>
+</body>
+</html>
